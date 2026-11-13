@@ -1,0 +1,15 @@
+name: Keep Render awake
+
+on:
+  schedule:
+    # Every 10 minutes (UTC). Backup for the app's own self-ping.
+    - cron: "*/10 * * * *"
+  workflow_dispatch:   # "Run workflow" button for manual tests
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping health endpoint
+        run: curl -fsS --retry 3 --retry-delay 15 --max-time 90 "${{ vars.RENDER_URL }}/health"
