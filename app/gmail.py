@@ -9,6 +9,15 @@ from app.config import settings
 SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
 PROCESSED_LABEL = "ai-processed"
 ESCALATED_LABEL = "needs-human"
+INBOX_QUERY = (
+    f"in:inbox -label:{PROCESSED_LABEL} "
+    "-category:promotions "
+    "-category:social "
+    "-from:noreply "
+    "-from:no-reply "
+    "-from:udemy.com "
+    "-from:openai.com"
+)
 
 
 class Gmail:
@@ -36,9 +45,10 @@ class Gmail:
         return ids
 
     def list_new_message_ids(self, max_results: int = 10) -> list[str]:
+
         response = self.users.messages().list(
             userId="me",
-            q=f"in:inbox -label:{PROCESSED_LABEL}",
+            q=INBOX_QUERY,
             maxResults=max_results,
         ).execute()
         return [message["id"] for message in response.get("messages", [])]
