@@ -1,3 +1,12 @@
+# Stage 1: build the dashboard with Node. Only the built files are kept.
+FROM node:22-slim AS dashboard
+WORKDIR /dashboard
+COPY dashboard/package.json dashboard/package-lock.json ./
+RUN npm ci
+COPY dashboard/ ./
+RUN npm run build
+
+# Stage 2: the app.
 # 1. Start from a small official Python image (matches .python-version).
 FROM python:3.13-slim
 
@@ -17,6 +26,9 @@ RUN uv sync --frozen --no-dev --no-install-project
 # 6. Now copy the code.
 COPY app ./app
 COPY knowledge_base ./knowledge_base
+
+# Copy the built dashboard from stage 1. FastAPI serves it at /.
+COPY --from=dashboard /dashboard/dist ./dashboard/dist
 
 
 # 7. Start the poller in the background and the web server in the foreground.
