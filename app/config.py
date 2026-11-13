@@ -12,9 +12,11 @@ class Settings(BaseSettings):
     database_url: str
     classifier_model: str
     agent_model: str
-    poll_interval_seconds: int = 60
+    poll_interval_seconds: int = 600
     dashboard_username: str = "admin"
     dashboard_password: str = ""
+    keep_alive_seconds: int = 300
+    render_external_url: str = ""
 
 
 settings = Settings()  

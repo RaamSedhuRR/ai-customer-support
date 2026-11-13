@@ -1,0 +1,12 @@
+.env
+credentials.json
+.venv
+.git
+.DS_Store
+__pycache__
+*.pyc
+evals
+playground
+scripts
+supabase
+*.code-workspace
