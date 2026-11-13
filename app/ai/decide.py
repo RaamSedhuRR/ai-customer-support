@@ -3,9 +3,21 @@ from app.ai.classifier import classify
 from app.ai.rules import CUSTOMER_STEPS, resolve_issue
 from app.ai.schemas import Decision
 
+# Caps what one email sends to the model, so a huge thread can't blow the
+# provider's per-request or per-minute token limits (~4 characters per token).
+MAX_THREAD_CHARS = 50_000
+
+
+def trim_thread(thread: str) -> str:
+    """Keep the end of a long thread, where the latest message is."""
+    if len(thread) <= MAX_THREAD_CHARS:
+        return thread
+    return "[Earlier part of the thread cut for length]\n\n" + thread[-MAX_THREAD_CHARS:]
+
 
 def decide(thread: str, has_attachments: bool = False) -> Decision:
     """Run the AI steps for one email thread. The models propose, this function decides."""
+    thread = trim_thread(thread)
     classification = classify(thread)
 
     def escalate(reason: str, proposed_action: str | None = None) -> Decision:
