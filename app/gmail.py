@@ -1,12 +1,14 @@
 import base64
+import logging
 from email.message import EmailMessage
+from email.utils import parseaddr
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 from app.config import settings
 
-from email.utils import parseaddr
+logger = logging.getLogger(__name__)
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
 PROCESSED_LABEL = "ai-processed"
@@ -32,6 +34,13 @@ BLOCKED_SENDER_PATTERNS = (
 )
 
 
+def is_blocked_sender(from_header: str) -> bool:
+    """True for automated senders, such as no-reply addresses, that the query may miss."""
+    _, sender = parseaddr(from_header)
+    sender = sender.lower()
+    return any(pattern in sender for pattern in BLOCKED_SENDER_PATTERNS)
+
+
 class Gmail:
     def __init__(self) -> None:
         creds = Credentials(
@@ -55,15 +64,6 @@ class Gmail:
                 label = self.users.labels().create(userId="me", body={"name": name}).execute()
                 ids[name] = label["id"]
         return ids
-
-    def is_blocked_sender(from_header: str) -> bool:
-        _, sender = parseaddr(from_header)
-        sender = sender.lower()
-
-        return any(
-            pattern in sender
-            for pattern in BLOCKED_SENDER_PATTERNS
-        )
 
 
     def list_new_message_ids(self, max_results: int = 10) -> list[str]:
@@ -97,12 +97,14 @@ class Gmail:
             )
 
             if is_blocked_sender(from_header):
-                print(f"Skipping no-reply email: {from_header}")
+                logger.info("Skipping no-reply email: %s", from_header)
+                # Label it so the search stops returning it and it can't crowd out real emails.
+                self.add_label(message["id"], PROCESSED_LABEL)
                 continue
 
             valid_message_ids.append(message["id"])
 
-            return valid_message_ids
+        return valid_message_ids
 
     def get_message(self, message_id: str) -> dict:
         return self.users.messages().get(userId="me", id=message_id, format="full").execute()
