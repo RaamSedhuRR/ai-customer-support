@@ -5,22 +5,16 @@ import {
   LayoutDashboardIcon,
   LogOutIcon,
   MenuIcon,
-  MonitorIcon,
-  MoonIcon,
-  SunIcon,
   TicketIcon,
   type LucideIcon,
 } from "lucide-react"
 import { PollButton } from "@/components/poll-button"
-import { useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
@@ -83,12 +77,11 @@ function NavLinks({ route, onNavigate }: { route: Route; onNavigate?: () => void
 }
 
 function AccountMenu({ onLogout }: { onLogout: () => void }) {
-  const { theme, setTheme } = useTheme()
   const user = currentUser()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Account and theme">
+        <Button variant="ghost" size="icon" aria-label="Account">
           <span className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase">
             {user.charAt(0) || "?"}
           </span>
@@ -99,22 +92,6 @@ function AccountMenu({ onLogout }: { onLogout: () => void }) {
           <p className="text-xs text-muted-foreground">Signed in as</p>
           <p className="truncate font-medium">{user}</p>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-xs text-muted-foreground">Theme</DropdownMenuLabel>
-        <DropdownMenuRadioGroup
-          value={theme}
-          onValueChange={(value) => setTheme(value as typeof theme)}
-        >
-          <DropdownMenuRadioItem value="light">
-            <SunIcon /> Light
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="dark">
-            <MoonIcon /> Dark
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="system">
-            <MonitorIcon /> System
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onLogout}>
           <LogOutIcon /> Log out

@@ -198,8 +198,10 @@ function EventRow({
 function summary(event: SupportEvent): string {
   if (event.status === "failed") return event.error?.split("\n")[0] ?? "Failed"
   if (event.status === "processing") return "In progress…"
-  if (isProcessedResult(event.result))
-    return `${event.result.action === "reply" ? "Replied" : "Escalated"} · ${humanize(event.result.section)}`
+  if (isProcessedResult(event.result)) {
+    const verb = event.result.action === "reply" ? "Replied" : "Escalated"
+    return event.result.section ? `${verb} · ${humanize(event.result.section)}` : verb
+  }
   if (event.result && "reason" in event.result) return `Skipped: ${event.result.reason}`
   return humanize(event.status)
 }
@@ -241,13 +243,19 @@ function EventDetails({ event }: { event: SupportEvent }) {
           <Field label="Section">{humanize(r.section)}</Field>
           <Field label="Processing time">{duration(event.created_at, event.processed_at)}</Field>
         </div>
-        <Field label="Reason">{r.reason}</Field>
+        {r.reason && <Field label="Reason">{r.reason}</Field>}
         {r.proposed_action && <Field label="Proposed action">{r.proposed_action}</Field>}
-        <Field label="Reply sent">
-          <div className="rounded-lg border bg-background p-3 leading-relaxed whitespace-pre-wrap break-words">
-            {r.reply}
-          </div>
-        </Field>
+        {r.reply ? (
+          <Field label="Reply sent">
+            <div className="rounded-lg border bg-background p-3 leading-relaxed whitespace-pre-wrap break-words">
+              {r.reply}
+            </div>
+          </Field>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            No reply text was recorded for this email (processed by an older version of the bot).
+          </p>
+        )}
       </div>
     )
   }

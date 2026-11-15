@@ -6,6 +6,8 @@ from googleapiclient.discovery import build
 
 from app.config import settings
 
+from email.utils import parseaddr
+
 SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
 PROCESSED_LABEL = "ai-processed"
 ESCALATED_LABEL = "needs-human"
@@ -13,10 +15,20 @@ INBOX_QUERY = (
     f"in:inbox -label:{PROCESSED_LABEL} "
     "-category:promotions "
     "-category:social "
-    "-from:noreply "
-    "-from:no-reply "
+    "-from:(no-reply) "
+    "-from:(noreply) "
+    "-from:(do-not-reply) "
+    "-from:(donotreply) "
     "-from:udemy.com "
     "-from:openai.com"
+)
+BLOCKED_SENDER_PATTERNS = (
+    "no-reply",
+    "noreply",
+    "do-not-reply",
+    "donotreply",
+    "do_not_reply",
+    "do not reply",
 )
 
 
@@ -44,6 +56,16 @@ class Gmail:
                 ids[name] = label["id"]
         return ids
 
+    def is_blocked_sender(from_header: str) -> bool:
+        _, sender = parseaddr(from_header)
+        sender = sender.lower()
+
+        return any(
+            pattern in sender
+            for pattern in BLOCKED_SENDER_PATTERNS
+        )
+
+
     def list_new_message_ids(self, max_results: int = 10) -> list[str]:
 
         response = self.users.messages().list(
@@ -51,7 +73,36 @@ class Gmail:
             q=INBOX_QUERY,
             maxResults=max_results,
         ).execute()
-        return [message["id"] for message in response.get("messages", [])]
+
+        valid_message_ids = []
+
+        for message in response.get("messages", []):
+
+            msg = self.users.messages().get(
+                userId="me",
+                id=message["id"],
+                format="metadata",
+                metadataHeaders=["From"],
+              ).execute()
+
+            headers = msg.get("payload", {}).get("headers", [])
+
+            from_header = next(
+                (
+                    h["value"]
+                    for h in headers
+                    if h["name"].lower() == "from"
+                ),
+                ""
+            )
+
+            if is_blocked_sender(from_header):
+                print(f"Skipping no-reply email: {from_header}")
+                continue
+
+            valid_message_ids.append(message["id"])
+
+            return valid_message_ids
 
     def get_message(self, message_id: str) -> dict:
         return self.users.messages().get(userId="me", id=message_id, format="full").execute()

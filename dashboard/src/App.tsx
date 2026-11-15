@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { SearchXIcon } from "lucide-react"
 import { AppShell } from "@/components/app-shell"
+import { ErrorBoundary } from "@/components/error-boundary"
 import { EmptyState } from "@/components/states"
 import { Button } from "@/components/ui/button"
 import { Toaster } from "@/components/ui/sonner"
@@ -77,7 +78,9 @@ export default function App() {
     <TooltipProvider delayDuration={300}>
       {loggedIn ? (
         <AppShell route={route} onLogout={logOut}>
-          <Page key={route.name === "ticket" ? `ticket-${route.id}` : route.name} route={route} />
+          <ErrorBoundary key={route.name === "ticket" ? `ticket-${route.id}` : route.name}>
+            <Page route={route} />
+          </ErrorBoundary>
         </AppShell>
       ) : (
         <LoginPage onLogin={() => setLoggedIn(true)} />

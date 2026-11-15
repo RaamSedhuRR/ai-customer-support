@@ -31,7 +31,8 @@ export function duration(start: string, end: string | null): string {
 }
 
 /** "paddle-boards" → "Paddle boards" */
-export function humanize(value: string): string {
+export function humanize(value: string | null | undefined): string {
+  if (!value) return "—"
   const text = value.replace(/[-_]/g, " ")
   return text.charAt(0).toUpperCase() + text.slice(1)
 }

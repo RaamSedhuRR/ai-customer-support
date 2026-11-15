@@ -26,12 +26,13 @@ export type Message = {
   created_at: string
 }
 
+// Older pipeline versions stored only `action`, so every other field is optional.
 export type ProcessedResult = {
   action: "reply" | "escalate"
-  section: string
-  reply: string
-  reason: string
-  proposed_action: string | null
+  section?: string | null
+  reply?: string | null
+  reason?: string | null
+  proposed_action?: string | null
 }
 
 export type SkippedResult = { reason: string }
